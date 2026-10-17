@@ -5,6 +5,15 @@ set -eu
 input=${1:?需要输入目录}
 output=${2:?需要输出目录}
 
-# TODO：删除下方提示和 exit 77，再填写你的命令。
-printf '%s\n' 'Q6 尚未实现' >&2
-exit 77
+root="$output/sysroot"
+admindir="$root/var/lib/dpkg"
+
+# dpkg 的私有数据库需要预先存在，否则非 root 下会报 status area 不可访问。
+mkdir -p "$admindir/info" "$admindir/updates" "$admindir/triggers" \
+    "$admindir/parts" "$admindir/alternatives"
+[ -e "$admindir/status" ] || : > "$admindir/status"
+[ -e "$admindir/available" ] || : > "$admindir/available"
+
+dpkg --root="$root" --force-not-root --log=/dev/null -i "$input/aim-sentry-tools.deb"
+
+"$root/usr/bin/aim-sentry-info" > "$output/tool-output.txt"
